@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的隨機小測驗</title>
+    <style>
+        /* 簡單的樣式 */
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        .quiz-container { max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
+        .option-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2 id="question">正在載入題庫...</h2>
+        <div id="options"></div>
+        <p id="result"></p>
+        <button id="next-btn" style="display:none;" onclick="showRandomQuestion()">下一題</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

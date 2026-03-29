@@ -3,87 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文練習系統 v2.5 - 錯題消滅版</title>
+    <title>全科精熟學習系統 v3.0 - 多學科版</title>
     <style>
         :root { --primary: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg: #f8f9fa; --mastery: #f1c40f; --review: #9b59b6; }
         body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; width: 100%; max-width: 700px; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; }
-        .version-tag { font-size: 12px; color: #bbb; text-align: right; margin-bottom: 10px; }
-        h1 { color: var(--primary); margin-top: 0; }
-        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; cursor: pointer; font-size: 18px; transition: 0.3s; background: white; }
-        .btn:hover:not(:disabled) { border-color: var(--primary); background: #f0f7ff; }
+        .container { background: white; width: 100%; max-width: 700px; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; }
+        .version-tag { font-size: 12px; color: #bbb; text-align: right; margin-bottom: 10px; font-weight: bold; }
+        h1 { color: var(--primary); margin-top: 0; margin-bottom: 25px; }
+        
+        /* 表單元素 */
+        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-size: 18px; transition: 0.3s; background: white; outline: none; }
+        .btn:hover:not(:disabled) { border-color: var(--primary); background: #f0f7ff; transform: translateY(-2px); }
         .btn-start { background: var(--primary); color: white; border: none; font-weight: bold; margin-top: 20px; }
         .btn-retry { background: var(--review); color: white; border: none; font-weight: bold; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
         .hidden { display: none; }
         .input-group { margin: 15px 0; text-align: left; }
-        label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        label { font-weight: bold; color: #555; display: block; margin-bottom: 8px; font-size: 16px; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--primary); background: #fff; }
         
-        .error-msg { color: var(--danger); font-size: 13px; font-weight: bold; margin-top: 5px; min-height: 1.2em; }
+        .hint { font-size: 13px; color: #666; margin-top: 6px; padding-left: 2px; }
+        .error-msg { color: var(--danger); font-size: 14px; font-weight: bold; margin-top: 8px; min-height: 1.2em; }
 
-        /* 表格樣式 */
-        .review-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; background: #fff; }
-        .review-table th, .review-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        .review-table th { background: #f2f2f2; }
+        /* 結果顯示 */
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        .review-table th, .review-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .review-table th { background: #f8f9fa; }
         .status-correct { color: var(--success); font-weight: bold; }
         .status-wrong { color: var(--danger); font-weight: bold; }
-        .highlight-correct { background-color: #d4edda; color: #155724; font-weight: bold; padding: 2px 5px; border-radius: 4px; border: 1px solid #c3e6cb; }
+        .highlight-correct { background-color: #d4edda; color: #155724; font-weight: bold; padding: 3px 6px; border-radius: 4px; border: 1px solid #c3e6cb; }
         
-        /* 成功徽章 */
         .badge { font-size: 80px; margin: 20px 0; }
-        .mastery-text { color: var(--mastery); font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px #00000022; }
+        .mastery-text { color: var(--mastery); font-size: 28px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="version-tag">Version 2.5 - Mistake Terminator</div>
+    <div class="version-tag">Version 3.0 - Multi-Subject Mastery</div>
     
     <div id="setup-screen">
-        <h1>📝 英文精熟學習系統</h1>
+        <h1>🌟 全科精熟學習系統</h1>
+        
         <div class="input-group">
-            <label>學生姓名：</label>
+            <label>👤 學生姓名：</label>
             <input type="text" id="student-name" placeholder="請輸入姓名">
         </div>
+
         <div class="input-group">
-            <label>選擇練習單元：</label>
-            <select id="unit-select" onchange="updateMaxQuestions()">
-                <option value="past_tense_practice.json">過去式練習 (Past Tense)</option>
-                <option value="past_participle_practice.json">過去分詞練習 (Past Participle)</option>
+            <label>📚 選擇練習類別：</label>
+            <select id="subject-select" onchange="updateUnitList()">
+                <option value="english">英文練習 (English)</option>
+                <option value="science">自然練習 (Science)</option>
             </select>
         </div>
+
         <div class="input-group">
-            <label>設定測驗題數：</label>
-            <input type="number" id="count-input" min="1" placeholder="請輸入題數">
-            <div id="max-hint" style="font-size:13px; color:#666; margin-top:5px;">載入中...</div>
+            <label>📖 選擇練習單元：</label>
+            <select id="unit-select" onchange="updateMaxQuestions()">
+                </select>
+        </div>
+
+        <div class="input-group">
+            <label>🎯 設定測驗題數：</label>
+            <input type="number" id="count-input" min="1" placeholder="輸入數字">
+            <div id="max-hint" class="hint">正在讀取單元資訊...</div>
             <div id="error-area" class="error-msg"></div>
         </div>
-        <button id="start-btn" class="btn btn-start" onclick="initQuiz()">開始挑戰</button>
+
+        <button id="start-btn" class="btn btn-start" onclick="initQuiz()">開始學習挑戰</button>
     </div>
 
     <div id="quiz-screen" class="hidden">
         <h2 id="current-unit-display" style="color:var(--primary);"></h2>
-        <div id="mode-tag" style="background: #e9ecef; padding: 3px 12px; border-radius: 20px; font-size: 12px; display: inline-block; margin-bottom: 15px;">正式測驗</div>
-        <div style="font-size: 14px; color: #888;">當前進度：<span id="progress-text"></span></div>
-        <div id="question" style="font-size: 24px; font-weight: bold; margin: 30px 0;"></div>
+        <div id="mode-tag" style="background: #e9ecef; padding: 4px 15px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 15px; font-weight: bold;">正式測驗</div>
+        <div style="font-size: 14px; color: #888; margin-bottom: 10px;">目前進度：<span id="progress-text"></span></div>
+        <div id="question" style="font-size: 26px; font-weight: bold; margin: 30px 0; line-height: 1.4;"></div>
         <div id="options"></div>
-        <div id="feedback" style="margin-top: 15px; font-weight: bold; min-height: 1.5em; font-size: 1.2rem;"></div>
+        <div id="feedback" style="margin: 20px 0; font-weight: bold; min-height: 1.5em; font-size: 1.3rem;"></div>
         <button id="next-btn" class="btn btn-start hidden" onclick="goNext()">下一題</button>
     </div>
 
     <div id="result-screen" class="hidden">
         <div id="normal-result">
-            <h1>🏁 本次練習報告</h1>
-            <div style="font-size: 32px; font-weight: bold; color: var(--primary); margin: 10px 0;">
-                答對：<span id="score-val">0</span> / <span id="total-val">0</span>
+            <h1>🏁 練習報告</h1>
+            <div style="font-size: 36px; font-weight: bold; color: var(--primary); margin: 15px 0;">
+                得分：<span id="score-val">0</span> / <span id="total-val">0</span>
             </div>
             <p id="record-status" style="color: #666; font-size: 14px;"></p>
             
             <button id="retry-wrong-btn" class="btn btn-retry hidden" onclick="startRemediation()">🔥 繼續消滅剩下的錯題</button>
 
-            <h3 style="text-align: left; margin-top: 30px; border-left: 5px solid var(--primary); padding-left: 10px;">📊 作答明細</h3>
+            <h3 style="text-align: left; margin-top: 35px; border-left: 5px solid var(--primary); padding-left: 12px; color: #444;">📊 本輪作答詳情</h3>
             <div style="overflow-x: auto;">
                 <table class="review-table">
                     <thead>
@@ -97,14 +110,26 @@
         <div id="mastery-result" class="hidden">
             <div class="badge">🏆</div>
             <div class="mastery-text">恭喜完成「精熟學習」！</div>
-            <p>你已經消滅了所有錯題，這組題目你完全掌握了！</p>
+            <p style="font-size: 18px; color: #555;">你已經成功消滅所有錯題，太優秀了！</p>
         </div>
         
-        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">回首頁</button>
+        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">回首頁進行其他練習</button>
     </div>
 </div>
 
 <script>
+    // --- 1. 科目與單元配置區 (老師可自行在此擴充) ---
+    const SUBJECT_CONFIG = {
+        english: [
+            { name: "過去式練習 (Past Tense)", file: "past_tense_practice.json" },
+            { name: "過去分詞練習 (Past Participle)", file: "past_participle_practice.json" }
+        ],
+        science: [
+            { name: "六年級自然 1.1 練習", file: "natural_1.1_practice.json" }
+        ]
+    };
+
+    // --- 2. Google Form 設定 ---
     const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfm4hKuyg6BZBMwYmi-rbg7i2o3OKkCyRKXmEMCW-sf2J6JcA/formResponse";
     const ENTRY_IDS = {
         name: "entry.1455585119",
@@ -113,52 +138,85 @@
         total: "entry.865473161"
     };
 
-    let fullPool = [];      // 原始題庫
-    let quizData = [];      // 當前輪次的題目
+    let currentPool = [];    // 當前單元所有題目
+    let quizData = [];      // 本輪要考的題目
     let currentIndex = 0;
     let score = 0;
-    let currentRoundResponses = []; 
-    let globalWrongPool = []; // 尚未消滅的錯題池
+    let currentResponses = []; 
+    let wrongPool = [];     // 待消滅的錯題
     let isRemediation = false;
 
+    // 更新單元選單 (根據科目)
+    function updateUnitList() {
+        const subject = document.getElementById('subject-select').value;
+        const unitSelect = document.getElementById('unit-select');
+        const units = SUBJECT_CONFIG[subject];
+
+        unitSelect.innerHTML = ""; // 清空
+        units.forEach(unit => {
+            const opt = document.createElement('option');
+            opt.value = unit.file;
+            opt.innerText = unit.name;
+            unitSelect.appendChild(opt);
+        });
+
+        updateMaxQuestions(); // 更新最大題數提醒
+    }
+
+    // 更新最大題數提醒
     async function updateMaxQuestions() {
         const file = document.getElementById('unit-select').value;
         const hintEl = document.getElementById('max-hint');
+        const startBtn = document.getElementById('start-btn');
+        
+        hintEl.innerText = "讀取單元資訊中...";
+        startBtn.disabled = true;
+
         try {
             const res = await fetch(`./${file}`);
-            fullPool = await res.json();
-            hintEl.innerText = `💡 此單元共有 ${fullPool.length} 題，請輸入 1 ~ ${fullPool.length}`;
-        } catch (e) { hintEl.innerText = "❌ 讀取題庫失敗"; }
+            currentPool = await res.json();
+            hintEl.innerText = `💡 此單元共有 ${currentPool.length} 題，請輸入 1 ~ ${currentPool.length}`;
+            startBtn.disabled = false;
+        } catch (e) {
+            hintEl.innerText = "❌ 讀取題庫失敗，請確認 JSON 檔案是否存在。";
+        }
     }
 
     function initQuiz() {
         const name = document.getElementById('student-name').value.trim();
         const count = parseInt(document.getElementById('count-input').value);
-        if(!name) { document.getElementById('error-area').innerText = "⚠️ 請輸入姓名"; return; }
-        if(isNaN(count) || count < 1 || count > fullPool.length) {
-            document.getElementById('error-area').innerText = "⚠️ 題數錯誤"; return;
+        const errorArea = document.getElementById('error-area');
+
+        if(!name) { errorArea.innerText = "⚠️ 請輸入學生姓名"; return; }
+        if(isNaN(count) || count < 1 || count > currentPool.length) {
+            errorArea.innerText = `⚠️ 請輸入 1 ~ ${currentPool.length} 之間的有效數字`;
+            return;
         }
 
+        errorArea.innerText = "";
         window.studentName = name;
         window.unitTitle = document.getElementById('unit-select').options[document.getElementById('unit-select').selectedIndex].text;
         
-        let shuffled = [...fullPool].sort(() => Math.random() - 0.5);
+        let shuffled = [...currentPool].sort(() => Math.random() - 0.5);
         quizData = shuffled.slice(0, count);
         
         isRemediation = false;
-        startTheRound();
+        startRound();
     }
 
-    function startTheRound() {
+    function startRound() {
         currentIndex = 0;
         score = 0;
-        currentRoundResponses = [];
+        currentResponses = [];
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.add('hidden');
         document.getElementById('quiz-screen').classList.remove('hidden');
-        document.getElementById('mode-tag').innerText = isRemediation ? "🔥 錯題消滅模式" : "正式測驗模式";
-        document.getElementById('mode-tag').style.background = isRemediation ? "#9b59b6" : "#e9ecef";
-        document.getElementById('mode-tag').style.color = isRemediation ? "white" : "black";
+        
+        const modeTag = document.getElementById('mode-tag');
+        modeTag.innerText = isRemediation ? "🔥 錯題消滅模式" : "正式測驗模式";
+        modeTag.style.background = isRemediation ? "var(--review)" : "#e9ecef";
+        modeTag.style.color = isRemediation ? "white" : "#444";
+        
         document.getElementById('current-unit-display').innerText = window.unitTitle;
         showQuestion();
     }
@@ -189,19 +247,21 @@
         
         if(isCorrect) {
             btn.style.background = "var(--success)"; btn.style.color = "white";
-            document.getElementById('feedback').innerText = "✨ Correct!";
+            btn.style.borderColor = "var(--success)";
+            document.getElementById('feedback').innerText = "✨ 太棒了！答對囉！";
             document.getElementById('feedback').style.color = "var(--success)";
             score++;
         } else {
             btn.style.background = "var(--danger)"; btn.style.color = "white";
-            document.getElementById('feedback').innerText = `❌ Wrong!`;
+            btn.style.borderColor = "var(--danger)";
+            document.getElementById('feedback').innerText = `❌ 答錯了，正確答案是：${correct}`;
             document.getElementById('feedback').style.color = "var(--danger)";
             document.querySelectorAll('#options .btn').forEach(b => { 
                 if(b.innerText === correct) b.style.border = "2px solid var(--success)"; 
             });
         }
 
-        currentRoundResponses.push({
+        currentResponses.push({
             rawData: quizData[currentIndex],
             question: quizData[currentIndex].題目,
             userChoice: selected,
@@ -224,26 +284,23 @@
         const listBody = document.getElementById('full-review-list');
         listBody.innerHTML = "";
         
-        // 關鍵邏輯：篩選出本次依然答錯的題目
-        let thisRoundWrongs = [];
-        currentRoundResponses.forEach(item => {
-            if(!item.status) thisRoundWrongs.push(item.rawData);
+        let roundWrongs = [];
+        currentResponses.forEach(item => {
+            if(!item.status) roundWrongs.push(item.rawData);
             
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${item.question}</td>
                 <td class="${item.status ? '' : 'status-wrong'}">${item.userChoice}</td>
                 <td>${item.status ? item.correctAnswer : `<span class="highlight-correct">${item.correctAnswer}</span>`}</td>
-                <td class="${item.status ? 'status-correct' : 'status-wrong'}">${item.status ? '✅' : '❌'}</td>
+                <td class="${item.status ? 'status-correct' : 'status-wrong'}">${item.status ? '✅ 正確' : '❌ 錯誤'}</td>
             `;
             listBody.appendChild(row);
         });
 
-        // 更新全局錯題池
-        globalWrongPool = thisRoundWrongs;
+        wrongPool = roundWrongs;
 
-        // 判斷是否達成精熟
-        if(globalWrongPool.length === 0) {
+        if(wrongPool.length === 0) {
             document.getElementById('normal-result').classList.add('hidden');
             document.getElementById('mastery-result').classList.remove('hidden');
         } else {
@@ -254,32 +311,37 @@
             
             const retryBtn = document.getElementById('retry-wrong-btn');
             retryBtn.classList.remove('hidden');
-            retryBtn.innerText = `🔥 繼續挑戰剩下的 ${globalWrongPool.length} 個錯題`;
+            retryBtn.innerText = `🔥 繼續消滅剩下的 ${wrongPool.length} 題錯題`;
         }
 
-        if(!isRemediation) submitToGoogleForm();
-        else document.getElementById('record-status').innerText = "補救練習中，成績不重複採計。";
+        if(!isRemediation) submitResults();
+        else document.getElementById('record-status').innerText = "補救模式完成，成績不重複上傳。";
     }
 
     function startRemediation() {
-        quizData = [...globalWrongPool]; // 只考剩下的錯題
+        quizData = [...wrongPool];
         isRemediation = true;
-        startTheRound();
+        startRound();
     }
 
-    function submitToGoogleForm() {
-        document.getElementById('record-status').innerText = "正式成績上傳中...";
+    function submitResults() {
+        document.getElementById('record-status').innerText = "正在同步正式成績至紀錄表...";
         const formData = new FormData();
         formData.append(ENTRY_IDS.name, window.studentName);
         formData.append(ENTRY_IDS.unit, window.unitTitle);
         formData.append(ENTRY_IDS.score, score);
         formData.append(ENTRY_IDS.total, quizData.length);
+        
         fetch(GOOGLE_FORM_URL, { method: "POST", mode: "no-cors", body: formData })
-        .then(() => { document.getElementById('record-status').innerText = "✅ 正式成績已存入紀錄表"; })
-        .catch(() => { document.getElementById('record-status').innerText = "⚠️ 上傳失敗"; });
+        .then(() => { 
+            document.getElementById('record-status').innerText = "✅ 正式成績已成功存入老師的紀錄表";
+            document.getElementById('record-status').style.color = "var(--success)";
+        })
+        .catch(() => { document.getElementById('record-status').innerText = "⚠️ 網路異常，成績未能上傳"; });
     }
 
-    window.onload = updateMaxQuestions;
+    // 初始化選單
+    window.onload = updateUnitList;
 </script>
 </body>
 </html>

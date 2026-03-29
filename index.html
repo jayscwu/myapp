@@ -2,22 +2,209 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>我的隨機小測驗</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自然科隨機測驗</title>
     <style>
-        /* 簡單的樣式 */
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        .quiz-container { max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; }
-        .option-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; cursor: pointer; }
+        /* 基本樣式美化 */
+        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .quiz-container { background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 600px; text-align: center; }
+        h1 { color: #333; margin-bottom: 30px; }
+        #question { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 25px; min-height: 1.2em; }
+        .option-btn { display: block; width: 100%; background-color: white; border: 2px solid #e0e0e0; color: #333; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+        .option-btn:hover { background-color: #f0f8ff; border-color: #3498db; }
+        
+        /* 答題回饋樣式 */
+        .correct { background-color: #2ecc71 !important; color: white !important; border-color: #2ecc71 !important; }
+        .wrong { background-color: #e74c3c !important; color: white !important; border-color: #e74c3c !important; }
+        
+        #result-msg { font-size: 20px; font-weight: bold; margin-top: 20px; min-height: 1.2em; }
+        
+        /* 功能按鈕 */
+        .control-btn { background-color: #3498db; color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 25px; cursor: pointer; margin-top: 20px; transition: background-color 0.2s; display: none; /* 預設隱藏 */ }
+        .control-btn:hover { background-color: #2980b9; }
+
+        /* 成績單樣式 */
+        #final-screen { display: none; }
+        .stat-box { font-size: 22px; margin: 20px 0; color: #555; }
+        .score { font-size: 48px; color: #27ae60; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="quiz-container">
-        <h2 id="question">正在載入題庫...</h2>
-        <div id="options"></div>
-        <p id="result"></p>
-        <button id="next-btn" style="display:none;" onclick="showRandomQuestion()">下一題</button>
+
+    <div class="quiz-container" id="quiz-screen">
+        <div style="font-size: 14px; color: #888; text-align: right;">題目: <span id="current-number">0</span>/<span id="total-number">0</span></div>
+        <h1 id="question">正在載入題庫...</h1>
+        <div id="options-container">
+            </div>
+        <div id="result-msg"></div>
+        <button id="next-btn" class="control-btn" onclick="showNextQuestion()">下一題</button>
     </div>
+
+    <div class="quiz-container" id="final-screen">
+        <h1>測驗結束</h1>
+        <div class="stat-box">
+            答對題數: <span id="correct-count" class="score">0</span> / <span id="total-ans-count">0</span>
+        </div>
+        <div class="stat-box">正確率: <span id="accuracy">0</span>%</div>
+        <button class="control-btn" style="display:inline-block; background-color: #27ae60;" onclick="location.reload()">再試一次</button>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="app.js"></script>
+    
+    <script>
+        // ==========================================
+        // 設定區：請貼上你從 Google Sheets 獲得的 CSV 連結
+        // ==========================================
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhhiEiWxlYdOjHqbnmgV7ztbBUcZ6YaMu6N7cd0dOCSCeOimoUuD4XgFMe5m_oYsr6fL4Fowci5cGy/pub?output=csv'; 
+        // ==========================================
+
+        let quizData = []; // 存放所有題目
+        let currentQuestionIndex = 0; // 目前第幾題
+        let score = 0; // 答對分數
+        let isAnswered = false; // 防止重複點選
+
+        // 初始化：抓取資料
+        async function initQuiz() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: true, // 自動將第一列視為標題
+                    skipEmptyLines: true, // 跳過空行
+                    complete: (results) => {
+                        quizData = results.data;
+                        // 優化：過濾掉沒有題目的空資料
+                        quizData = quizData.filter(item => item.題目 && item.題目.trim() !== "");
+                        
+                        if (quizData.length > 0) {
+                            // --- 需求：題目順序隨機 ---
+                            shuffleArray(quizData); 
+                            
+                            startQuiz();
+                        } else {
+                            document.getElementById('question').innerText = "題庫中沒有有效題目。";
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("載入失敗:", error);
+                document.getElementById('question').innerText = "無法載入題庫，請檢查網路或連結。";
+            }
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('total-number').innerText = quizData.length;
+            document.getElementById('total-ans-count').innerText = quizData.length;
+            showQuestion();
+        }
+
+        // 顯示題目與選項
+        function showQuestion() {
+            isAnswered = false; // 重設答題狀態
+            document.getElementById('result-msg').innerText = '';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('current-number').innerText = currentQuestionIndex + 1;
+            
+            const item = quizData[currentQuestionIndex];
+            document.getElementById('question').innerText = item.題目;
+            
+            // --- 修正與需求：組合正確答案與陷阱選項 ---
+            // 注意：這裡的欄位名稱必須完全對應你的 Google Sheet 表頭
+            const options = [
+                item.答案, 
+                item.陷阱1, 
+                item.陷阱2, 
+                item.陷阱3
+            ].filter(opt => opt && opt.trim() !== ""); // 過濾掉空的選項
+
+            // --- 需求：選項隨機出現 ---
+            shuffleArray(options);
+            
+            // 生成 HTML 按鈕
+            const container = document.getElementById('options-container');
+            container.innerHTML = ''; // 清空舊選項
+            
+            options.forEach(optText => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = optText;
+                // 將正確答案暫存在按鈕上，方便比對，但不顯示出來
+                btn.dataset.correct = item.答案; 
+                btn.onclick = (e) => checkAnswer(e);
+                container.appendChild(btn);
+            });
+        }
+
+        // 檢查答案
+        function checkAnswer(e) {
+            if (isAnswered) return; // 如果答過了，就沒反應
+            isAnswered = true;
+            
+            const selectedBtn = e.target;
+            const selectedAnswer = selectedBtn.innerText;
+            const correctAnswer = selectedBtn.dataset.correct;
+            const resultMsg = document.getElementById('result-msg');
+            
+            // 找出所有的按鈕
+            const allBtns = document.querySelectorAll('.option-btn');
+            
+            if (selectedAnswer === correctAnswer) {
+                // 答對了
+                selectedBtn.classList.add('correct');
+                resultMsg.innerText = "✅ 正確！";
+                resultMsg.style.color = "#2ecc71";
+                score++;
+            } else {
+                // 答錯了
+                selectedBtn.classList.add('wrong');
+                resultMsg.innerText = `❌ 錯誤。答案是：${correctAnswer}`;
+                resultMsg.style.color = "#e74c3c";
+                
+                // 強調顯現正確答案
+                allBtns.forEach(btn => {
+                    if (btn.innerText === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            // 顯示下一題按鈕
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                showQuestion();
+            } else {
+                // --- 需求：統計答題結果 ---
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('final-screen').style.display = 'block';
+            
+            document.getElementById('correct-count').innerText = score;
+            const accuracy = quizData.length > 0 ? Math.round((score / quizData.length) * 100) : 0;
+            document.getElementById('accuracy').innerText = accuracy;
+        }
+
+        // 隨機打亂陣列的函數 (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 執行初始化
+        initQuiz();
+
+    </script>
 </body>
 </html>

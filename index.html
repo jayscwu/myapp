@@ -35,32 +35,28 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <script>
-    // ⚠️ 請務必在此貼上你的 CSV 連結
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhhiEiWxlYdOjHqbnmgV7ztbBUcZ6YaMu6N7cd0dOCSCeOimoUuD4XgFMe5m_oYsr6fL4Fowci5cGy/pub?output=csv'; 
+// 1. 修改資料來源網址，直接寫檔名即可
+    const JSON_URL = './quiz.json'; 
 
     let questions = [];
-    let currentIndex = 0;
-    let score = 0;
 
     async function loadData() {
-        const res = await fetch(CSV_URL);
-        const csv = await res.text();
-        Papa.parse(csv, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                // 自動修復：把欄位名稱頭尾的空白去掉，防止 "題目 " 抓不到的問題
-                questions = results.data.map(row => {
-                    let newRow = {};
-                    for (let key in row) { newRow[key.trim()] = row[key].trim(); }
-                    return newRow;
-                }).filter(q => q.題目); // 只要有題目的才算
-
-                // 隨機打亂題目順序
-                questions.sort(() => Math.random() - 0.5);
-                startQuiz();
-            }
-        });
+        try {
+            // 2. 使用 fetch 讀取本地檔案
+            const response = await fetch(JSON_URL);
+            
+            // 3. 直接轉換為 JSON 物件
+            questions = await response.json();
+    
+            // 隨機打亂題目順序
+            questions.sort(() => Math.random() - 0.5);
+            
+            console.log("題庫載入成功！共", questions.length, "題");
+            startQuiz();
+        } catch (error) {
+            console.error("載入 JSON 失敗:", error);
+            document.getElementById('question').innerText = "讀取 quiz.json 失敗，請確認檔案是否存在。";
+        }
     }
 
     function startQuiz() {

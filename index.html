@@ -3,31 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文練習系統 - 精準控制版</title>
+    <title>英文練習系統 v1.5 - 全題回顧版</title>
     <style>
         :root { --primary: #4a90e2; --success: #2ecc71; --danger: #e74c3c; --bg: #f8f9fa; }
         body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; }
+        .container { background: white; width: 100%; max-width: 700px; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; }
+        
+        /* 版本標籤 */
+        .version-tag { font-size: 12px; color: #bbb; text-align: right; margin-bottom: 10px; }
+        
+        h1 { color: var(--primary); margin-top: 0; }
         .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; cursor: pointer; font-size: 18px; transition: 0.3s; background: white; }
         .btn:hover:not(:disabled) { border-color: var(--primary); background: #f0f7ff; }
         .btn-start { background: var(--primary); color: white; border: none; font-weight: bold; margin-top: 20px; }
         .btn-start:disabled { background: #ccc; cursor: not-allowed; }
+        
         .hidden { display: none; }
         .input-group { margin: 15px 0; text-align: left; }
         label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--primary); }
         
-        /* 提醒文字樣式 */
         .hint { font-size: 13px; color: #666; margin-top: 5px; }
         .error-msg { color: var(--danger); font-size: 13px; font-weight: bold; margin-top: 5px; min-height: 1.2em; }
 
-        /* 錯題表格 */
-        .wrong-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; background: #fff; }
-        .wrong-table th, .wrong-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .wrong-table th { background: #f8f9fa; color: #666; }
-        .txt-red { color: var(--danger); font-weight: bold; }
-        .txt-green { color: var(--success); font-weight: bold; }
+        /* 成績單表格樣式 */
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; background: #fff; }
+        .review-table th, .review-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .review-table th { background: #f2f2f2; }
+        
+        /* 狀態顏色 */
+        .status-correct { color: var(--success); font-weight: bold; }
+        .status-wrong { color: var(--danger); font-weight: bold; }
+        
+        /* 凸顯正確答案 */
+        .highlight-correct { background-color: #d4edda; color: #155724; font-weight: bold; padding: 2px 5px; border-radius: 4px; border: 1px solid #c3e6cb; }
         
         #feedback { margin: 15px 0; font-size: 1.2rem; min-height: 1.5em; }
     </style>
@@ -35,14 +44,14 @@
 <body>
 
 <div class="container">
+    <div class="version-tag">Version 1.5 - Comprehensive Review</div>
+    
     <div id="setup-screen">
         <h1>📝 英文測驗設定</h1>
-        
         <div class="input-group">
             <label>學生姓名：</label>
             <input type="text" id="student-name" placeholder="請輸入姓名">
         </div>
-
         <div class="input-group">
             <label>選擇練習單元：</label>
             <select id="unit-select" onchange="updateMaxQuestions()">
@@ -50,14 +59,12 @@
                 <option value="past_participle_practice.json">過去分詞練習 (Past Participle)</option>
             </select>
         </div>
-
         <div class="input-group">
             <label>設定測驗題數：</label>
             <input type="number" id="count-input" min="1" placeholder="請輸入欲練習題數">
-            <div id="max-hint" class="hint">正在讀取題庫數量...</div>
+            <div id="max-hint" class="hint">讀取中...</div>
             <div id="error-area" class="error-msg"></div>
         </div>
-
         <button id="start-btn" class="btn btn-start" onclick="initQuiz()">開始測驗</button>
     </div>
 
@@ -71,23 +78,28 @@
     </div>
 
     <div id="result-screen" class="hidden">
-        <h1>🏁 測驗結束</h1>
-        <div style="font-size: 40px; font-weight: bold; color: var(--success); margin: 20px 0;">
-            <span id="score-val">0</span> / <span id="total-val">0</span>
+        <h1>🏁 測驗結果報告</h1>
+        <div style="font-size: 32px; font-weight: bold; color: var(--primary); margin: 10px 0;">
+            得分：<span id="score-val">0</span> / <span id="total-val">0</span>
         </div>
-        <p id="record-status" style="color: #4a90e2; font-weight: bold;">正在儲存成績...</p>
+        <p id="record-status" style="color: #666; font-size: 14px;">自動儲存成績中...</p>
         
-        <div id="review-area">
-            <h3 style="text-align: left; margin-top: 30px;">❌ 錯題檢討</h3>
-            <table class="wrong-table">
+        <h3 style="text-align: left; margin-top: 30px; border-left: 5px solid var(--primary); padding-left: 10px;">📊 全題作答回顧</h3>
+        <div style="overflow-x: auto;">
+            <table class="review-table">
                 <thead>
-                    <tr><th>題目</th><th>你的答案</th><th>正確答案</th></tr>
+                    <tr>
+                        <th>題目</th>
+                        <th>你的答案</th>
+                        <th>正確答案</th>
+                        <th>結果</th>
+                    </tr>
                 </thead>
-                <tbody id="wrong-list"></tbody>
+                <tbody id="full-review-list"></tbody>
             </table>
         </div>
         
-        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">回主選單</button>
+        <button class="btn btn-start" style="margin-top: 30px;" onclick="location.reload()">回主選單再練習一次</button>
     </div>
 </div>
 
@@ -101,67 +113,52 @@
         total: "entry.865473161"
     };
 
-    let fullData = [];      // 存放當前單元所有題目
-    let quizData = [];      // 存放學生選定的題目
+    let fullData = [];
+    let quizData = [];
     let currentIndex = 0;
     let score = 0;
-    let wrongAnswers = []; 
-    let studentName = "";
-    let selectedUnitName = "";
+    
+    // 儲存每一題的作答紀錄
+    let allResponses = []; 
 
-    // 當頁面載入或切換單元時，自動更新最大題數
     async function updateMaxQuestions() {
         const file = document.getElementById('unit-select').value;
         const hintEl = document.getElementById('max-hint');
-        const inputEl = document.getElementById('count-input');
         const startBtn = document.getElementById('start-btn');
-        
         hintEl.innerText = "讀取中...";
         startBtn.disabled = true;
 
         try {
             const res = await fetch(`./${file}`);
             fullData = await res.json();
-            const total = fullData.length;
-            
-            hintEl.innerText = `💡 此單元共有 ${total} 題，請輸入 1 ~ ${total}`;
-            inputEl.max = total; // 設定 HTML5 最大值限制
-            inputEl.value = Math.min(10, total); // 預設 10 題或總數
+            hintEl.innerText = `💡 此單元共有 ${fullData.length} 題，請輸入 1 ~ ${fullData.length}`;
             startBtn.disabled = false;
         } catch (e) {
-            hintEl.innerText = "❌ 無法讀取題庫檔";
+            hintEl.innerText = "❌ 無法讀取題庫";
         }
     }
 
-    async function initQuiz() {
-        studentName = document.getElementById('student-name').value.trim();
-        const countInput = document.getElementById('count-input');
-        const count = parseInt(countInput.value);
+    function initQuiz() {
+        const studentName = document.getElementById('student-name').value.trim();
+        const count = parseInt(document.getElementById('count-input').value);
         const errorArea = document.getElementById('error-area');
 
-        // 檢查 1：姓名
         if(!studentName) { errorArea.innerText = "⚠️ 請輸入姓名"; return; }
-        
-        // 檢查 2：數字格式與範圍
-        if(isNaN(count) || count < 1) {
-            errorArea.innerText = "⚠️ 請輸入正確的數字（至少 1 題）";
-            return;
-        }
-        if(count > fullData.length) {
-            errorArea.innerText = `⚠️ 題數不可超過上限 ${fullData.length}`;
+        if(isNaN(count) || count < 1 || count > fullData.length) {
+            errorArea.innerText = `⚠️ 請輸入 1 ~ ${fullData.length} 之間的數字`;
             return;
         }
 
-        errorArea.innerText = ""; // 清除錯誤訊息
-        selectedUnitName = document.getElementById('unit-select').options[document.getElementById('unit-select').selectedIndex].text;
+        errorArea.innerText = "";
+        window.currentStudent = studentName;
+        window.currentUnit = document.getElementById('unit-select').options[document.getElementById('unit-select').selectedIndex].text;
 
-        // 隨機選取指定題數
         let shuffled = [...fullData].sort(() => Math.random() - 0.5);
         quizData = shuffled.slice(0, count);
 
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('quiz-screen').classList.remove('hidden');
-        document.getElementById('current-unit-display').innerText = selectedUnitName;
+        document.getElementById('current-unit-display').innerText = window.currentUnit;
         showQuestion();
     }
 
@@ -180,25 +177,39 @@
             const btn = document.createElement('button');
             btn.className = "btn";
             btn.innerText = opt;
-            btn.onclick = () => check(btn, opt, q.答案);
+            btn.onclick = () => checkAnswer(btn, opt, q.答案);
             container.appendChild(btn);
         });
     }
 
-    function check(btn, selected, correct) {
+    function checkAnswer(btn, selected, correct) {
         if(!document.getElementById('next-btn').classList.contains('hidden')) return;
         
+        const isCorrect = (selected === correct);
         const allBtns = document.querySelectorAll('#options .btn');
-        if(selected === correct) {
+        
+        if(isCorrect) {
             btn.style.background = "var(--success)";
             btn.style.color = "white";
+            document.getElementById('feedback').innerText = "✨ Correct!";
+            document.getElementById('feedback').style.color = "var(--success)";
             score++;
         } else {
             btn.style.background = "var(--danger)";
             btn.style.color = "white";
-            wrongAnswers.push({ title: quizData[currentIndex].題目, mine: selected, correct: correct });
+            document.getElementById('feedback').innerText = `❌ Wrong! It's "${correct}"`;
+            document.getElementById('feedback').style.color = "var(--danger)";
             allBtns.forEach(b => { if(b.innerText === correct) b.style.border = "2px solid var(--success)"; });
         }
+
+        // 紀錄本題結果
+        allResponses.push({
+            question: quizData[currentIndex].題目,
+            userChoice: selected,
+            correctAnswer: correct,
+            status: isCorrect
+        });
+
         document.getElementById('next-btn').classList.remove('hidden');
     }
 
@@ -214,33 +225,41 @@
         document.getElementById('score-val').innerText = score;
         document.getElementById('total-val').innerText = quizData.length;
         
-        const listBody = document.getElementById('wrong-list');
-        if(wrongAnswers.length === 0) {
-            document.getElementById('review-area').innerHTML = "<h3 style='color:var(--success)'>🏆 完美的表現！</h3>";
-        } else {
-            wrongAnswers.forEach(item => {
-                listBody.innerHTML += `<tr><td>${item.title}</td><td class="txt-red">${item.mine}</td><td class="txt-green">${item.correct}</td></tr>`;
-            });
-        }
+        const listBody = document.getElementById('full-review-list');
+        listBody.innerHTML = ""; // 清空
+
+        allResponses.forEach(item => {
+            const row = document.createElement('tr');
+            
+            // 如果答錯，正確答案欄位加上凸顯樣式
+            const correctCellContent = item.status 
+                ? item.correctAnswer 
+                : `<span class="highlight-correct">${item.correctAnswer}</span>`;
+            
+            row.innerHTML = `
+                <td>${item.question}</td>
+                <td class="${item.status ? '' : 'status-wrong'}">${item.userChoice}</td>
+                <td>${correctCellContent}</td>
+                <td class="${item.status ? 'status-correct' : 'status-wrong'}">${item.status ? '✅ 正確' : '❌ 錯誤'}</td>
+            `;
+            listBody.appendChild(row);
+        });
+
         submitToGoogleForm();
     }
 
     function submitToGoogleForm() {
         const formData = new FormData();
-        formData.append(ENTRY_IDS.name, studentName);
-        formData.append(ENTRY_IDS.unit, selectedUnitName);
+        formData.append(ENTRY_IDS.name, window.currentStudent);
+        formData.append(ENTRY_IDS.unit, window.currentUnit);
         formData.append(ENTRY_IDS.score, score);
         formData.append(ENTRY_IDS.total, quizData.length);
 
         fetch(GOOGLE_FORM_URL, { method: "POST", mode: "no-cors", body: formData })
-        .then(() => {
-            document.getElementById('record-status').innerText = "✅ 成績已儲存至老師的紀錄表";
-        }).catch(() => {
-            document.getElementById('record-status').innerText = "⚠️ 紀錄失敗，請拍下結果。";
-        });
+        .then(() => { document.getElementById('record-status').innerText = "✅ 成績已上傳成功"; })
+        .catch(() => { document.getElementById('record-status').innerText = "⚠️ 網路異常，成績未上傳"; });
     }
 
-    // 初始化讀取第一個單元的數量
     window.onload = updateMaxQuestions;
 </script>
 

@@ -3,122 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自然科隨機測驗 - 更新版</title>
+    <title>英文時態練習系統</title>
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .quiz-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        .question-text { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: #1a73e8; }
-        .option-btn { display: block; width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .option-btn:hover { background-color: #e8f0fe; border-color: #1a73e8; }
-        .correct { background-color: #4caf50 !important; color: white; border-color: #4caf50; }
-        .wrong { background-color: #f44336 !important; color: white; border-color: #f44336; }
-        .score-board { margin-top: 20px; font-weight: bold; color: #555; }
-        #next-btn { margin-top: 20px; padding: 10px 25px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; display: none; }
+        /* 整體風格設定 */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --bg-color: #f0f4f8;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 25px; }
+        h2 { color: #555; font-size: 1.2rem; }
+
+        /* 按鈕樣式 */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            background: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #333;
+        }
+
+        .btn:hover {
+            border-color: var(--primary-color);
+            background-color: #fdfdfd;
+            transform: translateY(-2px);
+        }
+
+        .btn-main {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-main:hover {
+            background-color: #357abd;
+        }
+
+        /* 答題回饋 */
+        .correct { background-color: var(--success-color) !important; color: white !important; border-color: var(--success-color) !important; }
+        .wrong { background-color: var(--danger-color) !important; color: white !important; border-color: var(--danger-color) !important; }
+
+        /* 隱藏區塊 */
+        .hidden { display: none; }
+
+        /* 進度條 */
+        .progress-text { font-size: 14px; color: #888; margin-bottom: 10px; }
+        
+        #feedback {
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+            min-height: 1.5em;
+        }
+
+        .score-display { font-size: 3rem; font-weight: bold; color: var(--success-color); }
     </style>
 </head>
 <body>
 
-<div class="quiz-card">
-    <div id="quiz-area">
-        <div id="progress" style="font-size: 12px; color: #888;">正在載入...</div>
-        <div id="question" class="question-text">載入中，請稍候...</div>
-        <div id="options"></div>
-        <div id="feedback" style="margin-top: 15px; font-weight: bold;"></div>
-        <button id="next-btn" onclick="nextQuestion()">下一題</button>
+<div class="container">
+    <div id="lobby-screen">
+        <h1>🌟 英文練習大廳</h1>
+        <p>請選擇你想要挑戰的單元：</p>
+        <button class="btn" onclick="loadQuiz('past_tense_practice.json', '過去式練習')">📘 過去式練習 (Past Tense)</button>
+        <button class="btn" onclick="loadQuiz('past_participle_practice.json', '過去分詞練習')">📙 過去分詞練習 (Past Participle)</button>
     </div>
-    <div id="result-area" style="display:none;">
-        <h2>測驗完成！</h2>
-        <p class="score-board">最終得分：<span id="final-score">0</span> / <span id="total-q">0</span></p>
-        <button onclick="location.reload()" style="padding: 10px 20px;">再測一次</button>
+
+    <div id="quiz-screen" class="hidden">
+        <h2 id="quiz-title">單元載入中...</h2>
+        <div class="progress-text">題目：<span id="current-idx">1</span> / <span id="total-idx">0</span></div>
+        <div id="question" style="font-size: 24px; font-weight: bold; margin: 20px 0; color: #2c3e50;"></div>
+        
+        <div id="options-container">
+            </div>
+
+        <div id="feedback"></div>
+        
+        <button id="next-btn" class="btn btn-main hidden" onclick="nextQuestion()">下一題</button>
+        <button class="btn" style="font-size: 14px; margin-top: 20px; color: #888; border: none;" onclick="location.reload()">放棄並回主選單</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h1>🎊 挑戰完成！</h1>
+        <p>你的得分是：</p>
+        <div class="score-display"><span id="final-score">0</span> / <span id="final-total">0</span></div>
+        <p id="grade-msg"></p>
+        <button class="btn btn-main" onclick="location.reload()">再試一次</button>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <script>
-// 1. 修改資料來源網址，直接寫檔名即可
-    const JSON_URL = './quiz.json'; 
+    let allQuestions = [];
+    let currentIndex = 0;
+    let userScore = 0;
+    let isAnswered = false;
 
-    let questions = [];
-
-    async function loadData() {
+    // 從本地讀取選定的 JSON 檔案
+    async function loadQuiz(fileName, title) {
         try {
-            // 2. 使用 fetch 讀取本地檔案
-            const response = await fetch(JSON_URL);
+            const response = await fetch(`./${fileName}`);
+            if (!response.ok) throw new Error('找不到檔案');
             
-            // 3. 直接轉換為 JSON 物件
-            questions = await response.json();
-    
+            allQuestions = await response.json();
+            
             // 隨機打亂題目順序
-            questions.sort(() => Math.random() - 0.5);
-            
-            console.log("題庫載入成功！共", questions.length, "題");
+            allQuestions.sort(() => Math.random() - 0.5);
+
+            // 切換畫面
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('quiz-title').innerText = title;
+            document.getElementById('total-idx').innerText = allQuestions.length;
+
             startQuiz();
         } catch (error) {
-            console.error("載入 JSON 失敗:", error);
-            document.getElementById('question').innerText = "讀取 quiz.json 失敗，請確認檔案是否存在。";
+            alert(`載入失敗！請確認 GitHub 中是否有 ${fileName} 檔案。`);
+            console.error(error);
         }
     }
 
     function startQuiz() {
         currentIndex = 0;
-        score = 0;
+        userScore = 0;
         showQuestion();
     }
 
     function showQuestion() {
-        const q = questions[currentIndex];
-        document.getElementById('progress').innerText = `題目：${currentIndex + 1} / ${questions.length}`;
+        isAnswered = false;
+        const q = allQuestions[currentIndex];
+        
+        // 更新進度
+        document.getElementById('current-idx').innerText = currentIndex + 1;
         document.getElementById('question').innerText = q.題目;
         document.getElementById('feedback').innerText = '';
-        document.getElementById('next-btn').style.display = 'none';
-        
-        // 組合正確答案與陷阱
-        let opts = [q.答案, q.陷阱1, q.陷阱2, q.陷阱3].filter(o => o);
-        // 隨機打亂選項順序
-        opts.sort(() => Math.random() - 0.5);
+        document.getElementById('next-btn').classList.add('hidden');
 
-        const optDiv = document.getElementById('options');
-        optDiv.innerHTML = '';
-        opts.forEach(text => {
+        // 整理選項：正確答案 + 陷阱
+        // 這裡會自動過濾掉 JSON 中沒有填寫的陷阱欄位
+        let rawOptions = [q.答案, q.陷阱1, q.陷阱2, q.陷阱3].filter(o => o && o.trim() !== "");
+        
+        // 隨機打亂選項順序
+        rawOptions.sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        rawOptions.forEach(optText => {
             const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = text;
-            btn.onclick = () => checkAnswer(btn, text, q.答案);
-            optDiv.appendChild(btn);
+            btn.className = 'btn';
+            btn.innerText = optText;
+            btn.onclick = () => checkAnswer(btn, optText, q.答案);
+            container.appendChild(btn);
         });
     }
 
-    function checkAnswer(btn, selected, correct) {
-        if (document.getElementById('next-btn').style.display === 'block') return;
+    function checkAnswer(selectedBtn, selectedText, correctText) {
+        if (isAnswered) return;
+        isAnswered = true;
 
-        const btns = document.querySelectorAll('.option-btn');
-        if (selected === correct) {
-            btn.classList.add('correct');
-            document.getElementById('feedback').innerText = '✅ 太棒了！答對了';
-            document.getElementById('feedback').style.color = 'green';
-            score++;
+        const allBtns = document.querySelectorAll('#options-container .btn');
+        const feedback = document.getElementById('feedback');
+
+        if (selectedText === correctText) {
+            selectedBtn.classList.add('correct');
+            feedback.innerText = "✨ 太棒了！答對了";
+            feedback.style.color = "var(--success-color)";
+            userScore++;
         } else {
-            btn.classList.add('wrong');
-            document.getElementById('feedback').innerText = `❌ 答錯囉，答案是：${correct}`;
-            document.getElementById('feedback').style.color = 'red';
-            btns.forEach(b => { if(b.innerText === correct) b.classList.add('correct'); });
+            selectedBtn.classList.add('wrong');
+            feedback.innerText = `💡 差一點點！答案是：${correctText}`;
+            feedback.style.color = "var(--danger-color)";
+            
+            // 將正確的那顆按鈕也標示出來
+            allBtns.forEach(btn => {
+                if (btn.innerText === correctText) btn.classList.add('correct');
+            });
         }
-        document.getElementById('next-btn').style.display = 'block';
+
+        document.getElementById('next-btn').classList.remove('hidden');
     }
 
     function nextQuestion() {
         currentIndex++;
-        if (currentIndex < questions.length) {
+        if (currentIndex < allQuestions.length) {
             showQuestion();
         } else {
-            document.getElementById('quiz-area').style.display = 'none';
-            document.getElementById('result-area').style.display = 'block';
-            document.getElementById('final-score').innerText = score;
-            document.getElementById('total-q').innerText = questions.length;
+            showResults();
         }
     }
 
-    loadData();
+    function showResults() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        
+        document.getElementById('final-score').innerText = userScore;
+        document.getElementById('final-total').innerText = allQuestions.length;
+
+        const ratio = userScore / allQuestions.length;
+        let msg = "";
+        if (ratio === 1) msg = "完美！你是時態大師！🏆";
+        else if (ratio >= 0.8) msg = "表現優異！再接再厲！🌟";
+        else if (ratio >= 0.6) msg = "還不錯，再多練習幾次會更好！👍";
+        else msg = "別灰心，再練習一次看看吧！💪";
+        
+        document.getElementById('grade-msg').innerText = msg;
+    }
 </script>
+
 </body>
 </html>
